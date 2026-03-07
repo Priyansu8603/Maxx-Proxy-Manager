@@ -1,0 +1,28 @@
+# Gradle
+.gradle/
+build/
+
+# Local config
+local.properties
+
+# IDE
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# APK / AAB
+*.apk
+*.aab
+
+# Keystore
+*.jks
+*.keystore
+
+# Ignore all markdown files
+*.md
+
+# Except README.md
+!README.md

@@ -1,0 +1,92 @@
+<resources>
+
+    <string name="app_name">Maxx</string>
+    <string name="back">Zurück</string>
+
+    <string name="home">Startseite</string>
+    <string name="logs">Protokolle</string>
+    <string name="settings">Einstellungen</string>
+
+    <string name="app_settings">App-Einstellungen</string>
+    <string name="app_settings_description">Sprache, Dunkelmodus &amp; mehr.</string>
+    <string name="proxy_settings">Proxy-Einstellungen</string>
+    <string name="proxy_settings_description">Bypass-Liste, Protokolle &amp; mehr.</string>
+    <string name="rate_on_playstore">Im PlayStore bewerten</string>
+    <string name="rate_description">Hinterlassen Sie eine Bewertung</string>
+    <string name="share_with_friends">Mit Freunden teilen</string>
+    <string name="share_description">App mit Freunden teilen.</string>
+    <string name="unlock_pro">Schalte mehr Funktionen mit Pro frei.</string>
+
+    <string name="proxy_list">Proxy-Liste</string>
+    <string name="no_proxy_added">Kein Proxy hinzugefügt</string>
+    <string name="click_to_add">Klicken Sie auf das Plus-Symbol, um neuen hinzuzufügen.</string>
+    <string name="select_all">Alle auswählen</string>
+    <string name="delete">Löschen</string>
+    <string name="share">Teilen</string>
+    <string name="refresh">Aktualisieren</string>
+    <string name="favourites">Favoriten</string>
+    <string name="all">Alle</string>
+    <string name="change">Ändern</string>
+    <string name="disconnect">Trennen</string>
+    <string name="connect">Verbinden</string>
+    <string name="proxy_already_connected">Proxy bereits verbunden</string>
+    <string name="disconnect_before_selecting_new">Bitte trennen Sie die aktuelle Proxy-Verbindung, bevor Sie eine neue auswählen.</string>
+    <string name="disconnect_and_switch">Trennen &amp; wechseln</string>
+    <string name="cancel">Abbrechen</string>
+
+    <string name="basic">Grundlegend</string>
+    <string name="bypass_list">Bypass-Liste</string>
+    <string name="bypass_list_description">Apps &amp; Webseiten auswählen, die den Proxy umgehen</string>
+    <string name="proxy_autofill">Proxy-Autovervollständigung</string>
+    <string name="proxy_autofill_description">Zugangsdaten beim Einfügen automatisch ausfüllen</string>
+    <string name="advanced_settings">Erweiterte Einstellungen</string>
+    <string name="logs_description">Verbindungsprotokolle aktivieren</string>
+    <string name="auto_delete_logs">Protokolle automatisch löschen</string>
+    <string name="hours_24">24 Stunden</string>
+    <string name="bandwidth_limit">Bandbreitenbegrenzung</string>
+    <string name="bandwidth_limit_description">Aktivieren, um die Datenübertragung zu begrenzen</string>
+    <string name="reset_app">App zurücksetzen</string>
+    <string name="reset_app_description">App zurücksetzen, um alle Einstellungen auf Standardwerte zurückzusetzen.</string>
+
+    <string name="more_app_settings">App-Einstellungen</string>
+    <string name="more_language">Sprache</string>
+    <string name="more_dark_mode">Dunkelmodus</string>
+    <string name="more_enable_dark_mode">Dunkelmodus aktivieren</string>
+    <string name="more_app_version">App-Version</string>
+    <string name="more_version_number">Version</string>
+    <string name="select_language">Sprache auswählen</string>
+
+    <string name="get_pro">Pro holen</string>
+    <string name="whats_included">Was ist enthalten</string>
+    <string name="pro_feature_manage_proxy">Unbegrenzte Proxy-Profile hinzufügen &amp; verwalten</string>
+    <string name="pro_feature_bypass_list">Seiten-Bypass-Liste</string>
+    <string name="pro_feature_logs">Verbindungsprotokolle</string>
+    <string name="pro_feature_instant_test">Sofortige Verbindungstests</string>
+    <string name="pro_feature_bandwidth">Bandbreite festlegen</string>
+    <string name="monthly_plan">Monatlicher Plan</string>
+    <string name="monthly_price">0,99 $/Monat</string>
+    <string name="annual_plan">Jahresplan</string>
+    <string name="annual_price">3,99 $/Jahr</string>
+    <string name="save_67">67 % sparen</string>
+    <string name="restore_purchase">Kauf wiederherstellen</string>
+
+    <string name="add_proxy">Proxy hinzufügen</string>
+    <string name="proxy_name">Proxy-Name</string>
+    <string name="host">Host</string>
+    <string name="port">Port</string>
+    <string name="protocol">Protokoll</string>
+    <string name="username">Benutzername</string>
+    <string name="password">Passwort</string>
+    <string name="remarks">Anmerkungen</string>
+    <string name="proxy_name_placeholder">Benennen Sie Ihr Proxy-Profil</string>
+    <string name="host_placeholder">IP-Adresse oder Hostname eingeben</string>
+    <string name="port_placeholder">Port</string>
+    <string name="username_placeholder">Optional Benutzername eingeben</string>
+    <string name="password_placeholder">Optional Passwort eingeben</string>
+    <string name="remarks_placeholder">Optional</string>
+    <string name="remarks_limit_note">Bis zu 140 Zeichen</string>
+    <string name="save">Speichern</string>
+    <string name="protocol_socks5">SOCKS5</string>
+    <string name="protocol_http">HTTP</string>
+    <string name="protocol_https">HTTPS</string>
+</resources>
