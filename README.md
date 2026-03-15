@@ -5,7 +5,7 @@
 
 ---
 
-## 📱 Overview
+## Overview
 
 Maxx Proxy Manager is a modern Android application for managing, testing, and monitoring proxy connections. Built with **Jetpack Compose**, **Clean Architecture**, and **MVVM**, this app provides a simple yet powerful interface for proxy management without the complexity of VPN implementations.
 
@@ -40,7 +40,7 @@ Maxx Proxy Manager is a modern Android application for managing, testing, and mo
 
 ---
 
-## 🏗️ Architecture
+##  Architecture
 
 This project follows **Clean Architecture** principles with clear separation of concerns:
 
@@ -56,9 +56,9 @@ For detailed architecture documentation, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ---
 
-## 🚀 Recent Changes (v2.0)
+## Recent Changes (v2.0)
 
-## 📦 Tech Stack
+## Tech Stack
 
 ### Core
 - **Language:** Kotlin 2.0.0
@@ -75,7 +75,7 @@ For detailed architecture documentation, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ---
 
-## 🛠️ Building the Project
+##  Building the Project
 
 ### Prerequisites
 - Android Studio Hedgehog | 2023.1.1 or later
@@ -106,12 +106,86 @@ For detailed architecture documentation, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ---
 
-## 📱 Screenshots
+## Screenshots
 
-_(Coming soon)_
+> Branch: `feature-home-screen` · Base URL: `https://github.com/Priyansu8603/Maxx-Proxy-Manager/blob/feature-home-screen/screenshots`
+
+---
+
+### Dark Theme
+
+<table>
+  <tr>
+    <td align="center"><b>Home</b></td>
+    <td align="center"><b>Add Proxy</b></td>
+    <td align="center"><b>Edit Proxy</b></td>
+    <td align="center"><b>Test</b></td>
+  </tr>
+  <tr>
+    <td><img alt="Home Dark" src="https://github.com/Priyansu8603/Maxx-Proxy-Manager/blob/feature-home-screen/screenshots/home.jpeg?raw=true" width="200"/></td>
+    <td><img alt="Add Proxy Dark" src="https://github.com/Priyansu8603/Maxx-Proxy-Manager/blob/feature-home-screen/screenshots/add_proxy.jpeg?raw=true" width="200"/></td>
+    <td><img alt="Edit Dark" src="https://github.com/Priyansu8603/Maxx-Proxy-Manager/blob/feature-home-screen/screenshots/edit.jpeg?raw=true" width="200"/></td>
+    <td><img alt="Test Dark" src="https://github.com/Priyansu8603/Maxx-Proxy-Manager/blob/feature-home-screen/screenshots/test.jpeg?raw=true" width="200"/></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Logs</b></td>
+    <td align="center"><b>Settings</b></td>
+    <td align="center"><b>Safe Browser</b></td>
+    <td align="center"><b>Delete / Swipe</b></td>
+  </tr>
+  <tr>
+    <td><img alt="Logs Dark" src="https://github.com/Priyansu8603/Maxx-Proxy-Manager/blob/feature-home-screen/screenshots/logs.jpeg?raw=true" width="200"/></td>
+    <td><img alt="Settings Dark" src="https://github.com/Priyansu8603/Maxx-Proxy-Manager/blob/feature-home-screen/screenshots/settings.jpeg?raw=true" width="200"/></td>
+    <td><img alt="Safe Browser Dark" src="https://github.com/Priyansu8603/Maxx-Proxy-Manager/blob/feature-home-screen/screenshots/safe_browser.jpeg?raw=true" width="200"/></td>
+    <td><img alt="Delete Dark" src="https://github.com/Priyansu8603/Maxx-Proxy-Manager/blob/feature-home-screen/screenshots/delete.jpeg?raw=true" width="200"/></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Multi-Select</b></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td><img alt="Selected Dark" src="https://github.com/Priyansu8603/Maxx-Proxy-Manager/blob/feature-home-screen/screenshots/selected.jpeg?raw=true" width="200"/></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+</table>
+
+---
+
+###  Light Theme
+
+<table>
+  <tr>
+    <td align="center"><b>Home</b></td>
+    <td align="center"><b>Add Proxy</b></td>
+    <td align="center"><b>Edit Proxy</b></td>
+    <td align="center"><b>Test</b></td>
+  </tr>
+  <tr>
+    <td><img alt="Home Light" src="https://github.com/Priyansu8603/Maxx-Proxy-Manager/blob/feature-home-screen/screenshots/home_light.jpeg?raw=true" width="200"/></td>
+    <td><img alt="Add Proxy Light" src="https://github.com/Priyansu8603/Maxx-Proxy-Manager/blob/feature-home-screen/screenshots/add_proxy_light.jpeg?raw=true" width="200"/></td>
+    <td><img alt="Edit Light" src="https://github.com/Priyansu8603/Maxx-Proxy-Manager/blob/feature-home-screen/screenshots/edit_light.jpeg?raw=true" width="200"/></td>
+    <td><img alt="Test Light" src="https://github.com/Priyansu8603/Maxx-Proxy-Manager/blob/feature-home-screen/screenshots/test_light.jpeg?raw=true" width="200"/></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Logs</b></td>
+    <td align="center"><b>Settings</b></td>
+    <td align="center"><b>Browser</b></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td><img alt="Logs Light" src="https://github.com/Priyansu8603/Maxx-Proxy-Manager/blob/feature-home-screen/screenshots/logss_light.jpeg?raw=true" width="200"/></td>
+    <td><img alt="Settings Light" src="https://github.com/Priyansu8603/Maxx-Proxy-Manager/blob/feature-home-screen/screenshots/settings_light.jpeg?raw=true" width="200"/></td>
+    <td><img alt="Browser Light" src="https://github.com/Priyansu8603/Maxx-Proxy-Manager/blob/feature-home-screen/screenshots/browser_light.jpeg?raw=true" width="200"/></td>
+    <td></td>
+  </tr>
+</table>
 
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please follow these guidelines:
 
@@ -134,7 +208,7 @@ Types: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`
 ---
 
 
-## 📞 Support
+## Support
 
 For questions or issues:
 - Open an issue on GitHub
@@ -142,7 +216,7 @@ For questions or issues:
 
 ---
 
-## 📊 Project Stats
+##  Project Stats
 
 | Metric | Value |
 |--------|-------|
@@ -155,7 +229,7 @@ For questions or issues:
 
 ---
 
-## 🎯 Design Principles
+## Design Principles
 
 1. **Simplicity** - No unnecessary complexity
 2. **Clean Architecture** - Clear separation of concerns
