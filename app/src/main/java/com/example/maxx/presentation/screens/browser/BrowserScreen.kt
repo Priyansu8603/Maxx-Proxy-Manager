@@ -2,6 +2,7 @@ package com.example.maxx.presentation.screens.browser
 
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
+import android.webkit.HttpAuthHandler
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -114,6 +115,15 @@ fun BrowserScreen(
     val proxies by vm.allProxies.collectAsState()
     val proxy: ProxyProfile? = remember(proxies, proxyId) { proxies.find { it.id == proxyId } }
 
+    // ── Proxy auth lifecycle — managed by ViewModel, not UI ──────────────
+    val hasCredentials = remember(proxy) {
+        vm.proxyHasCredentials(proxy)
+    }
+    DisposableEffect(proxy?.id) {
+        vm.installBrowserAuth(proxy)
+        onDispose { vm.clearBrowserAuth() }
+    }
+
     val cs   = MaterialTheme.colorScheme
     val dark = MaterialTheme.isDark
 
@@ -192,6 +202,7 @@ fun BrowserScreen(
                 ProxyWebView(
                     url               = urlText,
                     proxy             = proxy,
+                    hasCredentials    = hasCredentials,
                     onWebViewReady    = { webViewRef = it },
                     onPageStarted     = { url -> isPageLoading = true;  urlText = url ?: urlText },
                     onPageFinished    = { url -> isPageLoading = false; urlText = url ?: urlText },
@@ -765,6 +776,7 @@ private fun BrowserBottomBar(flagEmoji: String, proxyIp: String, checkIpBtnBg: C
 private fun ProxyWebView(
     url: String,
     proxy: ProxyProfile?,
+    hasCredentials: Boolean,
     onWebViewReady: (WebView) -> Unit,
     onPageStarted: (String?) -> Unit,
     onPageFinished: (String?) -> Unit,
@@ -792,6 +804,20 @@ private fun ProxyWebView(
                     override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) { super.onPageStarted(view, url, favicon); onPageStarted(url) }
                     override fun onPageFinished(view: WebView?, url: String?) { super.onPageFinished(view, url); onPageFinished(url) }
                     override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean = false
+
+                    // ── HTTP/HTTPS proxy auth: respond to 407 challenge ──────
+                    override fun onReceivedHttpAuthRequest(
+                        view: WebView?,
+                        handler: HttpAuthHandler?,
+                        host: String?,
+                        realm: String?
+                    ) {
+                        if (hasCredentials && handler != null && proxy != null) {
+                            handler.proceed(proxy.username, proxy.password)
+                        } else {
+                            super.onReceivedHttpAuthRequest(view, handler, host, realm)
+                        }
+                    }
                 }
                 webChromeClient = object : WebChromeClient() {
                     override fun onProgressChanged(view: WebView?, newProgress: Int) { super.onProgressChanged(view, newProgress); onProgressChanged(newProgress) }

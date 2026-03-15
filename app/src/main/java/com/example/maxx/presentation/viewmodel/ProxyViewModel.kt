@@ -5,6 +5,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.maxx.data.network.ProxyAuthManager
 import com.example.maxx.data.repository.ProxyRepository
 import com.example.maxx.domain.models.ConnectionState
 import com.example.maxx.domain.models.ProxyProfile
@@ -18,6 +19,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -45,6 +47,7 @@ class ProxyViewModel @Inject constructor(
     private val testProxyConnectionUseCase: TestProxyConnectionUseCase,
     private val performProxyTestUseCase: PerformProxyTestUseCase,
     private val exportProxiesUseCase: ExportProxiesUseCase,
+    private val authManager: ProxyAuthManager,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -206,18 +209,36 @@ class ProxyViewModel @Inject constructor(
         }
     }
 
+    // ── Active test job — kept so we can cancel mid-flight ───────────────────
+    //  Pattern: one slot at a time; starting a new test cancels any previous one.
+    private var activeTestJob: Job? = null
+
     fun performFullProxyTest(proxy: ProxyProfile) {
-        viewModelScope.launch {
+        // Cancel any in-flight test immediately — its coroutine is cooperative
+        // (withContext(Dispatchers.IO) honours cancellation at suspension points),
+        // so the old job will not write results after cancellation.
+        activeTestJob?.cancel()
+
+        activeTestJob = viewModelScope.launch {
             _proxyState.value = ProxyState.Testing
             _testResult.value = null
+
             val result = performProxyTestUseCase(
-                proxyId = proxy.id,
+                proxyId   = proxy.id,
                 proxyHost = proxy.ip,
                 proxyPort = proxy.port,
-                proxyType = proxy.protocol
+                proxyType = proxy.protocol,
+                username  = proxy.username,
+                password  = proxy.password,
             )
+
+            // ── Guard: only publish results if this job was NOT cancelled ──
+            // isActive is false once the job has been cancelled; this prevents
+            // a stale result from leaking to the UI after the user dismisses the sheet.
+            if (!isActive) return@launch
+
             _testResult.value = result
-            // ── Persist last result per proxy (survives sheet close) ──────
+            // Persist last result per proxy (survives sheet close)
             _lastTestResults.value = _lastTestResults.value + (proxy.id to result)
             _proxyState.value = if (result.success)
                 ProxyState.Success(result.latencyMs)
@@ -226,9 +247,19 @@ class ProxyViewModel @Inject constructor(
         }
     }
 
-    fun clearTestResult() {
+    /**
+     * Cancels any in-flight test and resets all test-related state to Idle.
+     * Call this when the user dismisses the test sheet mid-test.
+     */
+    fun cancelTest() {
+        activeTestJob?.cancel()
+        activeTestJob = null
         _testResult.value = null
         _proxyState.value = ProxyState.Idle
+    }
+
+    fun clearTestResult() {
+        cancelTest()   // also cancels any pending job — no stale write can follow
     }
 
     fun exportProxies(proxies: List<ProxyProfile>) {
@@ -254,5 +285,85 @@ class ProxyViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    // ── Browser proxy authentication lifecycle ────────────────────────────────
+    //  Called by BrowserScreen on enter/exit to install/clear the global
+    //  SOCKS5 authenticator. UI layer never touches java.net.Authenticator.
+
+    /** Install SOCKS5 auth for browsing. Call in DisposableEffect onEnter. */
+    fun installBrowserAuth(proxy: ProxyProfile?) {
+        if (proxy != null && authManager.hasCredentials(proxy.username, proxy.password)) {
+            authManager.installSocksAuth(proxy.username!!, proxy.password!!)
+        }
+    }
+
+    /** Clear SOCKS5 auth when leaving browser. Call in DisposableEffect onDispose. */
+    fun clearBrowserAuth() {
+        authManager.clearSocksAuth()
+    }
+
+    /**
+     * Returns true if the proxy has both a non-blank username and password.
+     * Use this in the UI instead of accessing [authManager] directly.
+     */
+    fun proxyHasCredentials(proxy: ProxyProfile?): Boolean =
+        authManager.hasCredentials(proxy?.username, proxy?.password)
+
+    // ── Quick connection test — used by Add/Edit Proxy screen ─────────────────
+    //  Sealed result type so the UI never handles raw exceptions.
+    //  UI layer: observe quickTestState, call quickTestProxy() on button click.
+    sealed interface QuickTestState {
+        object Idle : QuickTestState
+        object Testing : QuickTestState
+        data class Success(val latencyMs: Long) : QuickTestState
+        data class Failure(val reason: String) : QuickTestState
+    }
+
+    private val _quickTestState = MutableStateFlow<QuickTestState>(QuickTestState.Idle)
+    val quickTestState: StateFlow<QuickTestState> = _quickTestState.asStateFlow()
+
+    private var quickTestJob: Job? = null
+
+    /**
+     * Runs a quick TCP + HTTP connectivity check through the given proxy using
+     * [TestProxyConnectionUseCase]. Credentials are optional — if blank they are
+     * treated as absent and authentication is skipped (open/free proxy path).
+     *
+     * All network work happens in [TestProxyConnectionUseCase] on Dispatchers.IO.
+     * Result is emitted on the main thread via [_quickTestState].
+     */
+    fun quickTestProxy(
+        host: String,
+        port: Int,
+        protocol: String,
+        username: String?,
+        password: String?,
+    ) {
+        quickTestJob?.cancel()
+        quickTestJob = viewModelScope.launch {
+            _quickTestState.value = QuickTestState.Testing
+            val result = testProxyConnectionUseCase(
+                proxyHost = host,
+                proxyPort = port,
+                testUrl   = "http://ip-api.com/json/",
+                proxyType = protocol,
+                username  = username?.ifBlank { null },
+                password  = password?.ifBlank { null },
+            )
+            _quickTestState.value = when (result) {
+                is TestProxyConnectionUseCase.ProxyTestResult.Success ->
+                    QuickTestState.Success(result.responseTimeMs)
+                is TestProxyConnectionUseCase.ProxyTestResult.Error ->
+                    QuickTestState.Failure(result.message)
+            }
+        }
+    }
+
+    /** Reset quick-test state (e.g. when screen is closed or form fields change). */
+    fun resetQuickTest() {
+        quickTestJob?.cancel()
+        quickTestJob = null
+        _quickTestState.value = QuickTestState.Idle
     }
 }

@@ -55,6 +55,8 @@ private data class HomeUiState(
     val selectedIds: Set<Int>   = emptySet(),
     val showTestSheet: Boolean  = false,
     val testingProxyId: Int?    = null,
+    // ── The proxy the user last tapped — shown in Active Connection banner ──
+    val activeProxyId: Int?     = null,
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -84,9 +86,20 @@ fun HomeScreen(
     // ── local ui state ────────────────────────────────────────
     var ui by remember { mutableStateOf(HomeUiState()) }
 
-    // ── derived ───────────────────────────────────────────────
-    val activeProxy = remember(proxies) {
-        proxies.firstOrNull { it.isFavorite } ?: proxies.firstOrNull()
+    // ── derived: activeProxy = the one the user tapped, or favourite/first on first load ──
+    val activeProxy = remember(proxies, ui.activeProxyId) {
+        when {
+            ui.activeProxyId != null -> proxies.find { it.id == ui.activeProxyId }
+            else                     -> proxies.firstOrNull { it.isFavorite } ?: proxies.firstOrNull()
+        }
+    }
+
+    // ── auto-set activeProxyId once proxies load (only if not yet set) ──
+    LaunchedEffect(proxies) {
+        if (ui.activeProxyId == null && proxies.isNotEmpty()) {
+            val default = proxies.firstOrNull { it.isFavorite } ?: proxies.first()
+            ui = ui.copy(activeProxyId = default.id)
+        }
     }
 
     // ── theme tokens ──────────────────────────────────────────
@@ -130,11 +143,12 @@ fun HomeScreen(
             )
 
             ActiveConnectionBanner(
-                proxy        = activeProxy,
-                extra        = extra,
-                primary      = cs.primary,
-                onBackground = cs.onBackground,
-                onSpeedTest  = {
+                proxy           = activeProxy,
+                lastTestResult  = activeProxy?.let { lastTestResults[it.id] },
+                extra           = extra,
+                primary         = cs.primary,
+                onBackground    = cs.onBackground,
+                onSpeedTest     = {
                     activeProxy?.let { p ->
                         ui = ui.copy(testingProxyId = p.id)
                         vm.performFullProxyTest(p)
@@ -194,6 +208,7 @@ fun HomeScreen(
                             isTesting        = isTesting,
                             latencyMs        = latencyMs,
                             lastTestSuccess  = lastResult?.success,
+                            isActive         = proxy.id == ui.activeProxyId,
                             extra            = extra,
                             cardBg           = cs.surface,
                             primary          = cs.primary,
@@ -204,6 +219,8 @@ fun HomeScreen(
                                     val ids = ui.selectedIds.toMutableSet()
                                     if (proxy.id in ids) ids.remove(proxy.id) else ids.add(proxy.id)
                                     ui = ui.copy(selectedIds = ids, isSelectionMode = ids.isNotEmpty())
+                                } else {
+                                    ui = ui.copy(activeProxyId = proxy.id)
                                 }
                             },
                             onLongPress = {
@@ -224,7 +241,6 @@ fun HomeScreen(
                                     com.example.maxx.navigation.routes.Screen.Browser.createRoute(proxy.id)
                                 )
                             },
-                            onToggleFavorite = { vm.toggleFavorite(proxy.id, !proxy.isFavorite) }
                         )
                     }
                     item { ProTipCard(surface = cs.surface, outline = cs.outline) }
@@ -360,6 +376,7 @@ private fun HomeTopBar(
 @Composable
 private fun ActiveConnectionBanner(
     proxy: ProxyProfile?,
+    lastTestResult: com.example.maxx.domain.models.ProxyTestResult?,
     extra: com.example.maxx.presentation.theme.AppExtraColors,
     primary: Color,
     onBackground: Color,
@@ -369,6 +386,13 @@ private fun ActiveConnectionBanner(
     val cs   = MaterialTheme.colorScheme
     val dark = cs.background.luminance() < 0.5f
     val shadowColor = if (dark) Color(0xFF9B8FFF).copy(alpha = 0.9f) else Color.Black
+
+    // Status dot colour based on last test
+    val statusDotColor = when {
+        lastTestResult == null          -> onBackground.copy(alpha = 0.25f)  // never tested — grey
+        lastTestResult.success          -> extra.latencyGood                 // green
+        else                            -> extra.latencyBad                  // red
+    }
 
     Row(
         modifier = Modifier
@@ -380,7 +404,16 @@ private fun ActiveConnectionBanner(
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // ── Left: title + proxy name ──────────────────────────────────────────
+        // ── Status dot ────────────────────────────────────────────────────────
+        Box(
+            modifier = Modifier
+                .size(8.dp)
+                .clip(CircleShape)
+                .background(statusDotColor)
+        )
+        Spacer(Modifier.width(8.dp))
+
+        // ── Left: title + proxy name + ip:port ────────────────────────────────
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 "ACTIVE CONNECTION",
@@ -389,18 +422,44 @@ private fun ActiveConnectionBanner(
                 letterSpacing = 1.2.sp,
                 color         = extra.mutedLabel,
             )
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(2.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Bolt, null, tint = primary, modifier = Modifier.size(18.dp))
+                Icon(Icons.Default.Bolt, null, tint = primary, modifier = Modifier.size(16.dp))
                 Spacer(Modifier.width(4.dp))
                 Text(
-                    text       = proxy?.let { "${it.name} (${it.country ?: it.ip})" } ?: "No active proxy",
+                    text       = proxy?.name ?: "No proxy selected",
                     fontWeight = FontWeight.Bold,
                     fontSize   = 15.sp,
                     color      = primary,
                     maxLines   = 1,
                     overflow   = TextOverflow.Ellipsis,
                 )
+            }
+            // ip:port + latency subtitle
+            if (proxy != null) {
+                Spacer(Modifier.height(2.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text  = "${proxy.ip}:${proxy.port}",
+                        fontSize  = 11.sp,
+                        color     = extra.mutedLabel,
+                        maxLines  = 1,
+                        overflow  = TextOverflow.Ellipsis,
+                    )
+                    if (lastTestResult != null) {
+                        Text(
+                            text  = "  •  ",
+                            fontSize = 11.sp,
+                            color = extra.mutedLabel,
+                        )
+                        Text(
+                            text  = if (lastTestResult.success) "${lastTestResult.latencyMs}ms" else "Unreachable",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (lastTestResult.success) extra.latencyGood else extra.latencyBad,
+                        )
+                    }
+                }
             }
         }
 
@@ -549,6 +608,7 @@ private fun ProxyCard(
     isTesting: Boolean,
     latencyMs: Long?,
     lastTestSuccess: Boolean?,          // null = never tested, true = last pass, false = last fail
+    isActive: Boolean = false,
     extra: com.example.maxx.presentation.theme.AppExtraColors,
     cardBg: Color,
     primary: Color,
@@ -560,7 +620,6 @@ private fun ProxyCard(
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     onBrowse: () -> Unit,
-    onToggleFavorite: () -> Unit,
 ) {
     val haptic   = LocalHapticFeedback.current
     val density  = androidx.compose.ui.platform.LocalDensity.current
@@ -622,6 +681,7 @@ private fun ProxyCard(
             isTesting        = isTesting,
             latencyMs        = latencyMs,
             lastTestSuccess  = lastTestSuccess,
+            isActive         = isActive,
             extra            = extra,
             cardBg           = cardBg,
             primary          = primary,
@@ -635,7 +695,6 @@ private fun ProxyCard(
             onLongPress      = onLongPress,
             onTest           = onTest,
             onBrowse         = onBrowse,
-            onToggleFavorite = onToggleFavorite,
             dragOffsetPx     = animatedOffset,
             onDragDelta      = { delta ->
                 if (cardWidthPx > 0f) {
@@ -736,6 +795,7 @@ private fun ProxyCardContent(
     isTesting: Boolean,
     latencyMs: Long?,
     lastTestSuccess: Boolean?,
+    isActive: Boolean = false,
     extra: com.example.maxx.presentation.theme.AppExtraColors,
     cardBg: Color,
     primary: Color,
@@ -746,7 +806,6 @@ private fun ProxyCardContent(
     onLongPress: () -> Unit,
     onTest: () -> Unit,
     onBrowse: () -> Unit,
-    onToggleFavorite: () -> Unit,
     dragOffsetPx: Float = 0f,
     onDragDelta: (Float) -> Unit = {},
     onDragEnd: () -> Unit = {},
@@ -765,7 +824,17 @@ private fun ProxyCardContent(
         bottomEnd   = rightCornerDp,
     )
     val cs = MaterialTheme.colorScheme
-    val borderColor = if (isSelected) primary else cs.outline.copy(alpha = 0.25f)
+    // Active card gets a solid primary border (2dp); selected = primary; default = faint outline
+    val borderColor = when {
+        isActive   -> primary
+        isSelected -> primary
+        else       -> cs.outline.copy(alpha = 0.25f)
+    }
+    val borderWidth by animateDpAsState(
+        targetValue   = if (isActive) 2.dp else 1.dp,
+        animationSpec = tween(200),
+        label         = "card_border_width",
+    )
 
     Row(
         modifier = Modifier
@@ -773,7 +842,7 @@ private fun ProxyCardContent(
             .offset { IntOffset(dragOffsetPx.roundToInt(), 0) }
             .clip(cardShape)
             .background(cardBg)
-            .border(1.dp, borderColor, cardShape)
+            .border(borderWidth, borderColor, cardShape)
             .pointerInput(isSelectionMode, isSelected) {
                 detectTapGestures(onTap = { onTap() }, onLongPress = { onLongPress() })
             }
@@ -790,11 +859,11 @@ private fun ProxyCardContent(
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Checkbox (selection mode)
+        // Checkbox (selection mode) — purely visual, row's pointerInput handles the tap
         AnimatedVisibility(visible = isSelectionMode) {
             Checkbox(
                 checked = isSelected,
-                onCheckedChange = { onTap() },
+                onCheckedChange = null,
                 colors = CheckboxDefaults.colors(checkedColor = primary),
                 modifier = Modifier.size(20.dp)
             )
@@ -829,7 +898,6 @@ private fun ProxyCardContent(
                 .graphicsLayer { scaleX = dotScale; scaleY = dotScale }
                 .clip(CircleShape)
                 .background(dotColor)
-                .clickable { onToggleFavorite() }
         )
         Spacer(Modifier.width(10.dp))
 
@@ -990,7 +1058,6 @@ private fun UndoDeleteSnackbar(
     modifier: Modifier = Modifier,
 ) {
     val cs    = MaterialTheme.colorScheme
-    val extra = MaterialTheme.extraColors
 
     // Fraction of the 5s window remaining: 1f at start → 0f at end
     val fraction = secondsLeft / 5f
